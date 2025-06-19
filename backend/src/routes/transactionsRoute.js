@@ -10,6 +10,26 @@ const router = express.Router();
 
 /**
  * @openapi
+ * /api/transactions/summary/{userId}:
+ *   get:
+ *     summary: Get transaction summary for a user
+ *     parameters:
+ *       - name: userId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user
+ *     responses:
+ *       200:
+ *         description: Summary returned
+ *       500:
+ *         description: Server error
+ */
+router.get("/summary/:userId", getSummaryByUserId);
+
+/**
+ * @openapi
  * /api/transactions/{userId}:
  *   get:
  *     summary: Get all transactions for a user
@@ -76,25 +96,5 @@ router.post("/", createTransaction);
  *         description: Transaction not found
  */
 router.delete("/:id", deleteTransaction);
-
-/**
- * @openapi
- * /api/transactions/summary/{userId}:
- *   get:
- *     summary: Get transaction summary for a user
- *     parameters:
- *       - name: userId
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *         description: ID of the user
- *     responses:
- *       200:
- *         description: Summary returned
- *       500:
- *         description: Server error
- */
-router.get("/summary/:userId", getSummaryByUserId);
 
 export default router;
