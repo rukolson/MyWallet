@@ -27,12 +27,14 @@ export default function SignUpScreen() {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
     } catch (err) {
-      if (err.errors?.[0]?.code === "form_identifier_exists") {
+      console.log("Błąd rejestracji:", JSON.stringify(err, null, 2));
+
+      const firstError = err?.errors?.[0];
+      if (firstError?.code === "form_identifier_exists") {
         setError("Ten adres email jest już zajęty. Użyj innego.");
       } else {
         setError("Wystąpił błąd. Spróbuj ponownie.");
       }
-      console.log(err);
     }
   };
 
@@ -49,7 +51,8 @@ export default function SignUpScreen() {
         console.error(JSON.stringify(signUpAttempt, null, 2));
       }
     } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
+      console.error("Błąd weryfikacji:", JSON.stringify(err, null, 2));
+      setError("Niepoprawny kod weryfikacyjny lub błąd systemu.");
     }
   };
 

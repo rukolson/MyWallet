@@ -1,5 +1,6 @@
 import pkg from 'mongodb';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 const { MongoClient } = pkg;
@@ -19,6 +20,13 @@ export async function connectDB() {
     await client.connect();
     db = client.db(dbName);
     console.log("Connected to MongoDB:", dbName);
+
+    // Automatyczne tworzenie indeksu dla user_id i created_at
+    await db.collection("transactions").createIndex(
+      { user_id: 1, created_at: -1 },
+      { name: "userId_createdAt_index" }
+    );
+    console.log("Index ensured on transactions.user_id + created_at");
   } catch (err) {
     console.error("MongoDB connection failed:", err);
     process.exit(1);

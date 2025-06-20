@@ -32,7 +32,10 @@ export default function Page() {
         console.error(JSON.stringify(signInAttempt, null, 2));
       }
     } catch (err) {
-      if (err.errors?.[0]?.code === "form_password_incorrect") {
+      console.log("Błąd logowania:", JSON.stringify(err, null, 2));
+
+      const firstError = err?.errors?.[0];
+      if (firstError?.code === "form_password_incorrect") {
         setError("Hasło jest nieprawidłowe. Spróbuj ponownie.");
       } else {
         setError("Wystąpił błąd. Spróbuj ponownie.");

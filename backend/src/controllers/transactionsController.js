@@ -1,4 +1,7 @@
+import pkg from "mongodb";
 import { getDB } from "../config/db.js";
+
+const { ObjectId } = pkg;
 
 export async function getTransactionsByUserId(req, res) {
   try {
@@ -13,7 +16,7 @@ export async function getTransactionsByUserId(req, res) {
 
     res.status(200).json(transactions);
   } catch (error) {
-    console.log("Error getting the transactions", error);
+    console.error("Error getting the transactions", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -37,7 +40,6 @@ export async function createTransaction(req, res) {
 
     const result = await db.collection("transactions").insertOne(transaction);
     
-    // Pobierz utworzony dokument
     const createdTransaction = await db
       .collection("transactions")
       .findOne({ _id: result.insertedId });
@@ -45,7 +47,7 @@ export async function createTransaction(req, res) {
     console.log(createdTransaction);
     res.status(201).json(createdTransaction);
   } catch (error) {
-    console.log("Error creating the transaction", error);
+    console.error("Error creating the transaction", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -55,12 +57,10 @@ export async function deleteTransaction(req, res) {
     const { id } = req.params;
     const db = getDB();
 
-    // Sprawdź czy ID jest prawidłowe dla MongoDB
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({ message: "Invalid transaction ID" });
     }
 
-    const { ObjectId } = await import("mongodb");
     const result = await db
       .collection("transactions")
       .deleteOne({ _id: new ObjectId(id) });
@@ -71,7 +71,7 @@ export async function deleteTransaction(req, res) {
 
     res.status(200).json({ message: "Transaction deleted successfully" });
   } catch (error) {
-    console.log("Error deleting the transaction", error);
+    console.error("Error deleting the transaction:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -81,7 +81,6 @@ export async function getSummaryByUserId(req, res) {
     const { userId } = req.params;
     const db = getDB();
 
-    // Agregacja MongoDB do obliczenia podsumowania
     const summary = await db.collection("transactions").aggregate([
       { $match: { user_id: userId } },
       {
@@ -107,10 +106,10 @@ export async function getSummaryByUserId(req, res) {
     res.status(200).json({
       balance: result.balance,
       income: result.income,
-      expenses: Math.abs(result.expenses) // Zwróć dodatnią wartość dla wydatków
+      expenses: Math.abs(result.expenses)
     });
   } catch (error) {
-    console.log("Error getting the summary", error);
+    console.error("Error getting the summary", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }

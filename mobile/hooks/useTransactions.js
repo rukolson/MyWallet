@@ -1,11 +1,8 @@
-// własny hook reactowy
+// /mobile/hooks/useTransactions.js
 
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 import { API_URL } from "../constants/api";
-
-// const API_URL = "https://wallet-api-cxqp.onrender.com/api";
-// const API_URL = "http://localhost:5001/api";
 
 export const useTransactions = (userId) => {
   const [transactions, setTransactions] = useState([]);
@@ -16,10 +13,12 @@ export const useTransactions = (userId) => {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // useCallback jest używany dla wydajności – zapamięta funkcję między renderami
   const fetchTransactions = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/transactions/${userId}`);
+      const url = `${API_URL}/transactions/user_${userId}`;
+      console.log("Fetching transactions from:", url);
+
+      const response = await fetch(url);
       const data = await response.json();
       setTransactions(data);
     } catch (error) {
@@ -42,7 +41,6 @@ export const useTransactions = (userId) => {
 
     setIsLoading(true);
     try {
-      // obie funkcje mogą działać równolegle
       await Promise.all([fetchTransactions(), fetchSummary()]);
     } catch (error) {
       console.error("Błąd podczas ładowania danych:", error);
@@ -56,8 +54,7 @@ export const useTransactions = (userId) => {
       const response = await fetch(`${API_URL}/transactions/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Nie udało się usunąć transakcji");
 
-      // Odśwież dane po usunięciu
-      loadData();
+      await loadData(); // odśwież dane po usunięciu
       Alert.alert("Sukces", "Transakcja została usunięta");
     } catch (error) {
       console.error("Błąd podczas usuwania transakcji:", error);

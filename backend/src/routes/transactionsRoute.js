@@ -59,16 +59,20 @@ router.get("/:userId", getTransactionsByUserId);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - user_id
+ *               - title
+ *               - amount
+ *               - category
  *             properties:
- *               userId:
+ *               user_id:
+ *                 type: string
+ *               title:
  *                 type: string
  *               amount:
  *                 type: number
  *               category:
  *                 type: string
- *               date:
- *                 type: string
- *                 format: date
  *     responses:
  *       201:
  *         description: Transaction created successfully
