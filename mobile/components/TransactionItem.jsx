@@ -4,15 +4,15 @@ import { styles } from "../assets/styles/home.styles";
 import { COLORS } from "../constants/colors";
 import { formatDate } from "../lib/utils";
 
-// Map categories to their respective icons
+// Map categories to their respective icons (zaktualizuj do PL jeśli chcesz)
 const CATEGORY_ICONS = {
-  "Food & Drinks": "fast-food",
-  Shopping: "cart",
-  Transportation: "car",
-  Entertainment: "film",
-  Bills: "receipt",
-  Income: "cash",
-  Other: "ellipsis-horizontal",
+  "Jedzenie i napoje": "fast-food",
+  "Zakupy": "cart",
+  "Transport": "car",
+  "Rozrywka": "film",
+  "Rachunki": "receipt",
+  "Dochód": "cash",
+  "Inne": "ellipsis-horizontal",
 };
 
 export const TransactionItem = ({ item, onDelete }) => {
@@ -20,7 +20,7 @@ export const TransactionItem = ({ item, onDelete }) => {
   const iconName = CATEGORY_ICONS[item.category] || "pricetag-outline";
 
   return (
-    <View style={styles.transactionCard} key={item.id}>
+    <View style={styles.transactionCard}>
       <TouchableOpacity style={styles.transactionContent}>
         <View style={styles.categoryIconContainer}>
           <Ionicons name={iconName} size={22} color={isIncome ? COLORS.income : COLORS.expense} />
@@ -33,12 +33,14 @@ export const TransactionItem = ({ item, onDelete }) => {
           <Text
             style={[styles.transactionAmount, { color: isIncome ? COLORS.income : COLORS.expense }]}
           >
-            {isIncome ? "+" : "-"}${Math.abs(parseFloat(item.amount)).toFixed(2)}
+            {isIncome ? "+" : "-"}{Math.abs(parseFloat(item.amount)).toFixed(2)}zł
           </Text>
           <Text style={styles.transactionDate}>{formatDate(item.created_at)}</Text>
         </View>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(item.id)}>
+
+      {/* ❗ poprawka tutaj */}
+      <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(item._id)}>
         <Ionicons name="trash-outline" size={20} color={COLORS.expense} />
       </TouchableOpacity>
     </View>

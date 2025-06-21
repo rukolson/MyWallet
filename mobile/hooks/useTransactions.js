@@ -1,5 +1,3 @@
-// /mobile/hooks/useTransactions.js
-
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 import { API_URL } from "../constants/api";
@@ -15,12 +13,15 @@ export const useTransactions = (userId) => {
 
   const fetchTransactions = useCallback(async () => {
     try {
-      const url = `${API_URL}/transactions/user_${userId}`;
+      const url = `${API_URL}/transactions/${userId}`;
       console.log("Fetching transactions from:", url);
 
       const response = await fetch(url);
       const data = await response.json();
-      setTransactions(data);
+
+      // Posortuj transakcje od najnowszych
+      const sorted = [...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setTransactions(sorted);
     } catch (error) {
       console.error("Błąd podczas pobierania transakcji:", error);
     }
@@ -51,14 +52,24 @@ export const useTransactions = (userId) => {
 
   const deleteTransaction = async (id) => {
     try {
-      const response = await fetch(`${API_URL}/transactions/${id}`, { method: "DELETE" });
-      if (!response.ok) throw new Error("Nie udało się usunąć transakcji");
+      const url = `${API_URL}/transactions/${id}`;
+      console.log("Usuwanie transakcji ID:", id);
+      console.log("DELETE URL:", url);
+
+      const response = await fetch(url, { method: "DELETE" });
+
+      const responseData = await response.json();
+      console.log("Odpowiedź backendu:", responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData?.error || "Nie udało się usunąć transakcji");
+      }
 
       await loadData(); // odśwież dane po usunięciu
       Alert.alert("Sukces", "Transakcja została usunięta");
     } catch (error) {
       console.error("Błąd podczas usuwania transakcji:", error);
-      Alert.alert("Błąd", error.message);
+      Alert.alert("Błąd", error.message || "Wystąpił błąd przy usuwaniu");
     }
   };
 
