@@ -29,9 +29,6 @@ export default function Page() {
     user.id
   );
 
-  // Debug: sprawdź dane transakcji
-  console.log("TRANSAKCJE:", transactions);
-
   const onRefresh = async () => {
     setRefreshing(true);
     await loadData();
@@ -64,12 +61,15 @@ export default function Page() {
               style={styles.headerLogo}
               resizeMode="contain"
             />
-            <View style={styles.welcomeContainer}>
+            <TouchableOpacity
+              style={styles.welcomeContainer}
+              onPress={() => router.push("/profile")}
+            >
               <Text style={styles.welcomeText}>Witaj,</Text>
               <Text style={styles.usernameText}>
                 {user?.emailAddresses[0]?.emailAddress.split("@")[0]}
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.headerRight}>
@@ -93,7 +93,7 @@ export default function Page() {
       {/* LISTA TRANSAKCJI */}
       <FlatList
         data={transactions}
-        keyExtractor={(item) => item._id} // <- WAŻNE!
+        keyExtractor={(item) => item._id}
         renderItem={({ item }) => <TransactionItem item={item} onDelete={handleDelete} />}
         ListEmptyComponent={<NoTransactionsFound />}
         showsVerticalScrollIndicator={false}
