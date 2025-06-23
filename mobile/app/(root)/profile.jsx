@@ -7,23 +7,48 @@ import {
   Alert,
   Image,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { useUser } from "@clerk/clerk-expo";
+import { useUser, useAuth } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "../../constants/colors";
+import defaultAvatar from "../../assets/images/avatar.jpg";
 
 export default function ProfileScreen() {
   const { user } = useUser();
+  const { signOut } = useAuth();
   const router = useRouter();
 
+  const [newEmail, setNewEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [pendingEmailId, setPendingEmailId] = useState(null);
+  const [step, setStep] = useState(1);
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [gender, setGender] = useState("");
-  const [bio, setBio] = useState("");
+
+  const errorTranslations = {
+    "that email address is taken": "Ten adres e-mail jest już zajęty.",
+    "email address is not properly formatted": "Wprowadź poprawny adres e-mail.",
+    "code is incorrect": "Podany kod jest nieprawidłowy.",
+    "password is too weak": "Hasło jest zbyt słabe.",
+    "current_password must be included": "Musisz podać aktualne hasło.",
+    "current password is incorrect": "Aktualne hasło jest nieprawidłowe.",
+    "session not active": "Sesja wygasła. Zaloguj się ponownie.",
+  };
+
+  const translateError = (message) => {
+    const lower = message.toLowerCase();
+    const match = Object.keys(errorTranslations).find(key =>
+      lower.includes(key)
+    );
+    return match ? errorTranslations[match] : "Wystąpił nieznany błąd.";
+  };
 
   const handleChangeProfilePhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -46,75 +71,195 @@ export default function ProfileScreen() {
         Alert.alert("Sukces", "Zmieniono zdjęcie profilowe.");
       } catch (error) {
         console.error("Błąd zmiany zdjęcia:", error);
-        Alert.alert("Błąd", "Nie udało się zmienić zdjęcia.");
+        Alert.alert("Błąd", "Nie udało się zmienić zdjęcia profilowego.");
       } finally {
         setLoading(false);
       }
     }
   };
 
-  const handleSaveProfile = () => {
-    // Tutaj nic nie zapisujemy – tylko udajemy zapis w pamięci
-    Alert.alert("Zapisano", "Dane zostały zapisane lokalnie (tymczasowo).");
+  const handleStartEmailUpdate = async () => {
+    try {
+      const emailObj = await user.createEmailAddress({ email: newEmail });
+      await emailObj.prepareVerification({ strategy: "email_code" });
+      setPendingEmailId(emailObj.id);
+      setStep(2);
+      Alert.alert("Kod wysłany", "Sprawdź skrzynkę i wpisz kod weryfikacyjny.");
+    } catch (error) {
+      console.error("Błąd przy zmianie emaila:", error);
+      const rawMessage = error.errors?.[0]?.message || "";
+      const message = translateError(rawMessage);
+      Alert.alert("Błąd", message);
+    }
   };
 
+  const handleVerifyCode = async () => {
+    try {
+      const emailObj = user.emailAddresses.find(e => e.id === pendingEmailId);
+      if (!emailObj) throw new Error("Nie znaleziono adresu e-mail do weryfikacji.");
+
+      await emailObj.attemptVerification({ code: verificationCode });
+      await user.update({ primaryEmailAddressId: pendingEmailId });
+
+      Alert.alert("Sukces", "Adres e-mail został zmieniony.");
+      setStep(1);
+      setNewEmail("");
+      setVerificationCode("");
+    } catch (error) {
+      console.error("Błąd przy weryfikacji:", error);
+      const rawMessage = error.errors?.[0]?.message || error.message || "";
+      const message = translateError(rawMessage);
+      Alert.alert("Błąd", message);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      Alert.alert("Błąd", "Wprowadź aktualne i nowe hasło.");
+      return;
+    }
+
+    try {
+      await user.updatePassword({
+        currentPassword,
+        newPassword,
+      });
+
+      Alert.alert("Sukces", "Hasło zostało zmienione.");
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch (error) {
+      console.error("Błąd zmiany hasła:", error);
+      const rawMessage = error?.errors?.[0]?.message || "";
+      const message = translateError(rawMessage);
+      Alert.alert("Błąd", message);
+    }
+  };
+
+  const displayImage = user?.imageUrl?.includes("clerk.dev")
+    ? defaultAvatar
+    : { uri: user?.imageUrl };
+
   return (
-    <SafeAreaView style={{ flex: 1, padding: 20, backgroundColor: COLORS.background }}>
-      <TouchableOpacity onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
-      </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <ScrollView contentContainerStyle={{ padding: 20 }}>
+        <View style={{ alignItems: "center", marginTop: 10 }}>
+          {loading ? (
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          ) : (
+            <Image source={displayImage} style={{ width: 100, height: 100, borderRadius: 50 }} />
+          )}
+          <TouchableOpacity onPress={handleChangeProfilePhoto}>
+            <Text style={{ color: COLORS.primary, marginTop: 10, fontWeight: "bold" }}>
+              Zmień zdjęcie
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      <Text style={{ fontSize: 22, fontWeight: "bold", marginTop: 20 }}>Twój profil</Text>
+        <Text style={{ fontSize: 22, fontWeight: "bold", marginTop: 30 }}>Twój profil</Text>
+        <Text style={{ fontSize: 16, color: COLORS.textLight, marginBottom: 10 }}>
+          Obecny email: {user?.primaryEmailAddress?.emailAddress}
+        </Text>
 
-      {/* Zdjęcie profilowe */}
-      <View style={{ alignItems: "center", marginTop: 10 }}>
-        {loading ? (
-          <ActivityIndicator size="large" color={COLORS.primary} />
-        ) : (
-          <Image
-            source={{ uri: user?.imageUrl }}
-            style={{ width: 100, height: 100, borderRadius: 50 }}
-          />
+        {step === 1 && (
+          <>
+            <Text style={styles.label}>Nowy e-mail</Text>
+            <TextInput
+              placeholder="nowy@email.com"
+              value={newEmail}
+              onChangeText={setNewEmail}
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TouchableOpacity style={styles.button} onPress={handleStartEmailUpdate}>
+              <Text style={styles.buttonText}>Wyślij kod weryfikacyjny</Text>
+            </TouchableOpacity>
+          </>
         )}
-        <TouchableOpacity onPress={handleChangeProfilePhoto}>
-          <Text style={{ color: COLORS.primary, marginTop: 10, fontWeight: "bold" }}>
-            Zmień zdjęcie
-          </Text>
+
+        {step === 2 && (
+          <>
+            <Text style={styles.label}>Kod weryfikacyjny</Text>
+            <TextInput
+              placeholder="np. 123456"
+              value={verificationCode}
+              onChangeText={setVerificationCode}
+              style={styles.input}
+              keyboardType="number-pad"
+            />
+            <TouchableOpacity style={styles.button} onPress={handleVerifyCode}>
+              <Text style={styles.buttonText}>Zatwierdź e-mail</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setStep(1);
+                setNewEmail("");
+                setVerificationCode("");
+              }}
+            >
+              <Text style={{ color: COLORS.textLight, textAlign: "center", marginTop: 10 }}>
+                Anuluj zmianę e-maila
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        <Text style={styles.label}>Aktualne hasło</Text>
+        <TextInput
+          placeholder="••••••••"
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
+          style={styles.input}
+          secureTextEntry
+        />
+
+        <Text style={styles.label}>Nowe hasło</Text>
+        <TextInput
+          placeholder="Nowe hasło"
+          value={newPassword}
+          onChangeText={setNewPassword}
+          style={styles.input}
+          secureTextEntry
+        />
+
+        <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
+          <Text style={styles.buttonText}>Zmień hasło</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      <View style={{ padding: 20 }}>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: COLORS.border }]}
+          onPress={() => router.back()}
+        >
+          <Text style={[styles.buttonText, { color: COLORS.text }]}>Powrót</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => {
+            Alert.alert(
+              "Wylogowanie",
+              "Czy na pewno chcesz się wylogować?",
+              [
+                { text: "Anuluj", style: "cancel" },
+                {
+                  text: "Tak",
+                  style: "destructive",
+                  onPress: async () => {
+                    await signOut();
+                    router.replace("/sign-in");
+                  },
+                },
+              ],
+              { cancelable: true }
+            );
+          }}
+          style={[styles.button, { backgroundColor: COLORS.expense, marginTop: 10 }]}
+        >
+          <Text style={styles.buttonText}>Wyloguj się</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Imię */}
-      <Text style={styles.label}>Imię</Text>
-      <TextInput value={firstName} onChangeText={setFirstName} style={styles.input} />
-
-      {/* Nazwisko */}
-      <Text style={styles.label}>Nazwisko</Text>
-      <TextInput value={lastName} onChangeText={setLastName} style={styles.input} />
-
-      {/* Płeć */}
-      <Text style={styles.label}>Płeć</Text>
-      <TextInput
-        value={gender}
-        onChangeText={setGender}
-        placeholder="np. kobieta, mężczyzna, inne"
-        style={styles.input}
-      />
-
-      {/* Bio */}
-      <Text style={styles.label}>Bio</Text>
-      <TextInput
-        value={bio}
-        onChangeText={setBio}
-        multiline
-        numberOfLines={3}
-        style={[styles.input, { textAlignVertical: "top", height: 80 }]}
-        placeholder="Kilka słów o Tobie"
-      />
-
-      {/* Zapisz */}
-      <TouchableOpacity style={styles.button} onPress={handleSaveProfile}>
-        <Text style={styles.buttonText}>Zapisz zmiany</Text>
-      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -131,14 +276,14 @@ const styles = {
     padding: 10,
     borderRadius: 8,
     backgroundColor: COLORS.white,
-    marginTop: 8,
+    marginTop: 10,
   },
   button: {
     backgroundColor: COLORS.primary,
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
-    marginTop: 30,
+    marginTop: 10,
   },
   buttonText: {
     color: "#fff",
