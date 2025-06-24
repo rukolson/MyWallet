@@ -1,17 +1,16 @@
 import redisClient from "../config/redisClient.js";
 
-const WINDOW_SECONDS = 60;    // okno czasowe
-const MAX_REQUESTS = 100;     // maksymalna liczba żądań
+const WINDOW_SECONDS = 60;    
+const MAX_REQUESTS = 100;     
 
 const rateLimiter = async (req, res, next) => {
   try {
-    const identifier = req.ip || "global"; // można też użyć np. userId
+    const identifier = req.ip || "global"; 
     const key = `ratelimit:${identifier}`;
 
-    const current = await redisClient.incr(key); // zwiększamy licznik
+    const current = await redisClient.incr(key); 
 
     if (current === 1) {
-      // pierwszy raz – ustaw TTL
       await redisClient.expire(key, WINDOW_SECONDS);
     }
 

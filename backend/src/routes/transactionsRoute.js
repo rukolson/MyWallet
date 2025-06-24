@@ -101,4 +101,38 @@ router.post("/", createTransaction);
  */
 router.delete("/:id", deleteTransaction);
 
+/**
+ * @openapi
+ * /api/transactions/{id}:
+ *   put:
+ *     summary: Update a transaction by ID
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Transaction ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               amount:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Transaction updated
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: Transaction not found
+ */
+
 export default router;

@@ -58,5 +58,5 @@ export const THEMES = {
   ocean: oceanTheme,
 };
 
-// 👇 aktywny motyw – fioletowy
+
 export const COLORS = THEMES.purple;

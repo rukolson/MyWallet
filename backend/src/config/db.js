@@ -21,7 +21,6 @@ export async function connectDB() {
     db = client.db(dbName);
     console.log("Connected to MongoDB:", dbName);
 
-    // Automatyczne tworzenie indeksu dla user_id i created_at
     await db.collection("transactions").createIndex(
       { user_id: 1, created_at: -1 },
       { name: "userId_createdAt_index" }

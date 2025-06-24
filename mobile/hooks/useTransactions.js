@@ -19,7 +19,6 @@ export const useTransactions = (userId) => {
       const response = await fetch(url);
       const data = await response.json();
 
-      // Posortuj transakcje od najnowszych
       const sorted = [...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       setTransactions(sorted);
     } catch (error) {
@@ -65,7 +64,7 @@ export const useTransactions = (userId) => {
         throw new Error(responseData?.error || "Nie udało się usunąć transakcji");
       }
 
-      await loadData(); // odśwież dane po usunięciu
+      await loadData(); 
       Alert.alert("Sukces", "Transakcja została usunięta");
     } catch (error) {
       console.error("Błąd podczas usuwania transakcji:", error);

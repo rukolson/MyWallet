@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "../../constants/colors";
 import defaultAvatar from "../../assets/images/avatar.jpg";
+import { API_URL } from "../../constants/api";
 
 export default function ProfileScreen() {
   const { user } = useUser();
@@ -29,8 +30,18 @@ export default function ProfileScreen() {
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState(null);
+
+  useEffect(() => {
+    const requestPermissions = async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Brak uprawnień", "Musisz zezwolić na dostęp do galerii.");
+      }
+    };
+    requestPermissions();
+  }, []);
 
   const errorTranslations = {
     "that email address is taken": "Ten adres e-mail jest już zajęty.",
@@ -52,26 +63,37 @@ export default function ProfileScreen() {
 
   const handleChangeProfilePhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.5,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, 
       allowsEditing: true,
+      base64: true,
+      quality: 0.7,
     });
 
     if (!result.canceled) {
+      const asset = result.assets[0];
+      const base64Image = asset.base64;
+
       try {
         setLoading(true);
-        const file = result.assets[0];
-        await user.setProfileImage({
-          file: {
-            uri: file.uri,
-            name: "profile.jpg",
-            type: "image/jpeg",
+
+        const response = await fetch(`${API_URL}/upload/upload-profile-picture`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({ imageBase64: base64Image }),
         });
-        Alert.alert("Sukces", "Zmieniono zdjęcie profilowe.");
-      } catch (error) {
-        console.error("Błąd zmiany zdjęcia:", error);
-        Alert.alert("Błąd", "Nie udało się zmienić zdjęcia profilowego.");
+
+        const data = await response.json();
+        if (data.url) {
+          setImageUrl(data.url);
+          Alert.alert("Sukces", "Zdjęcie zostało przesłane.");
+        } else {
+          Alert.alert("Błąd", data.error || "Nie udało się przesłać zdjęcia.");
+        }
+      } catch (err) {
+        console.error("Błąd podczas przesyłania zdjęcia:", err);
+        Alert.alert("Błąd", "Coś poszło nie tak.");
       } finally {
         setLoading(false);
       }
@@ -136,9 +158,9 @@ export default function ProfileScreen() {
     }
   };
 
-  const displayImage = user?.imageUrl?.includes("clerk.dev")
-    ? defaultAvatar
-    : { uri: user?.imageUrl };
+  const displayImage = imageUrl
+    ? { uri: imageUrl }
+    : defaultAvatar;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>

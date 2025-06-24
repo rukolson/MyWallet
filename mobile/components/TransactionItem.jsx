@@ -4,7 +4,7 @@ import { styles } from "../assets/styles/home.styles";
 import { COLORS } from "../constants/colors";
 import { formatDate } from "../lib/utils";
 
-// Map categories to their respective icons (zaktualizuj do PL jeśli chcesz)
+
 const CATEGORY_ICONS = {
   "Jedzenie i napoje": "fast-food",
   "Zakupy": "cart",

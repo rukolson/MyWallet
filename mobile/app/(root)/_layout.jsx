@@ -5,7 +5,7 @@ import { Stack } from "expo-router/stack";
 export default function Layout() {
   const { isSignedIn, isLoaded } = useUser();
 
-  if (!isLoaded) return null; // this is for a better ux
+  if (!isLoaded) return null; 
 
   if (!isSignedIn) return <Redirect href={"/sign-in"} />;
 

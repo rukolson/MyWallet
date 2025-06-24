@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@azure/storage-blob": "^12.27.0",
     "@neondatabase/serverless": "^1.0.0",
     "cors": "^2.8.5",
     "cron": "^4.3.0",

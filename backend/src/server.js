@@ -4,9 +4,10 @@ import cors from "cors";
 import { connectDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
 import transactionsRoute from "./routes/transactionsRoute.js";
+import uploadRoute from "./routes/uploadRoute.js";
 import job from "./config/cron.js";
 
-// Swagger
+
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 
@@ -15,7 +16,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// 🔐 Dozwolone originy (frontend + Swagger UI)
 const allowedOrigins = [
   "http://localhost:8081",
   "http://localhost:5001"
@@ -34,11 +34,11 @@ app.use(cors({
   credentials: true
 }));
 
-// ✅ Middleware
-app.use(rateLimiter);
-app.use(express.json());
 
-// ✅ Swagger setup
+app.use(rateLimiter);
+app.use(express.json({ limit: "10mb" }));
+
+
 const swaggerSpec = swaggerJsdoc({
   definition: {
     openapi: "3.0.0",
@@ -51,20 +51,21 @@ const swaggerSpec = swaggerJsdoc({
 });
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// ✅ Health check
+
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-// ✅ API routes
-app.use("/api/transactions", transactionsRoute);
 
-// ✅ Start background job
+app.use("/api/transactions", transactionsRoute);
+app.use("/api/upload", uploadRoute); 
+
+
 if (process.env.NODE_ENV === "production") {
   job.start();
 }
 
-// ✅ MongoDB + start serwera
+
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

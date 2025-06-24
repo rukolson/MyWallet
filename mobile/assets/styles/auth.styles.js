@@ -1,4 +1,3 @@
-// styles/auth.styles.js
 import { StyleSheet } from "react-native";
 import { COLORS } from "../../constants/colors";
 
@@ -90,7 +89,7 @@ export const styles = StyleSheet.create({
     letterSpacing: 2,
   },
 
-  // 🔴 Error styles
+
   errorBox: {
     backgroundColor: "#FFE5E5",
     padding: 12,
