@@ -1,5 +1,5 @@
-import pkg from 'mongodb';
-import dotenv from 'dotenv';
+import pkg from "mongodb";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -11,6 +11,7 @@ const dbName = process.env.MONGODB_DB_NAME;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  tls: true, 
 });
 
 let db;
@@ -27,8 +28,8 @@ export async function connectDB() {
     );
     console.log("Index ensured on transactions.user_id + created_at");
   } catch (err) {
-    console.error("MongoDB connection failed:", err);
-    process.exit(1);
+    console.error("MongoDB connection failed:", err.message);
+    process.exit(1); 
   }
 }
 
@@ -44,6 +45,6 @@ export async function closeDB() {
     await client.close();
     console.log("MongoDB connection closed");
   } catch (err) {
-    console.error("Error closing MongoDB connection:", err);
+    console.error("Error closing MongoDB connection:", err.message);
   }
 }

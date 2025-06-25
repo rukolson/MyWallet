@@ -1,1 +1,1 @@
-export const API_URL = "http://192.168.0.136:5001/api";
+export const API_URL = "https://wallet-f2fdbwbhfvhhbhc7.francecentral-01.azurewebsites.net/api";
